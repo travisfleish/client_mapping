@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Connections</title>
+    <script>
+        let typingTimer; // Timer for delayed search
+        function searchPlayers() {
+            clearTimeout(typingTimer);  // Reset the timer on each keypress
+            typingTimer = setTimeout(() => {
+                let name = document.getElementById("player_name").value.trim();
+                if (name.length < 2) return;  // Require at least 2 characters before searching
+
+                fetch(`/search_players?name=${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    let dropdown = document.getElementById("player_dropdown");
+                    dropdown.innerHTML = "";  // Clear previous results
+
+                    if (data.length === 0) {
+                        dropdown.innerHTML = "<option>No players found</option>";
+                        return;
+                    }
+
+                    data.forEach(player => {
+                        let option = document.createElement("option");
+                        option.value = `${player["p.first_name"]} ${player["p.last_name"]}`;
+                        option.textContent = `${player["p.first_name"]} ${player["p.last_name"]}`;
+                        dropdown.appendChild(option);
+                    });
+
+                    document.getElementById("player_select").style.display = "block"; // Show dropdown
+                })
+                .catch(error => console.error("Error:", error));
+            }, 300);  // 300ms delay before making request
+        }
+
+        function fetchConnections() {
+            let selectedPlayer = document.getElementById("player_dropdown").value;
+            if (!selectedPlayer || selectedPlayer === "No players found") return;
+
+            fetch('/get_player_connections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `name=${encodeURIComponent(selectedPlayer)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultDiv = document.getElementById("results");
+                if (data.error) {
+                    resultDiv.innerHTML = `<p style="color:red;">${data.error}</p>`;
+                } else {
+                    let output = `<h3>Player: ${data.player}</h3><ul>`;
+                    data.top_connections.forEach(conn => {
+                        output += `<li><strong>${conn["teammate.first_name"]} ${conn["teammate.last_name"]}</strong> -
+                        Connections: ${conn["connection_strength"]},
+                        Types: ${conn["connection_types"].join(", ")}</li>`;
+                    });
+                    output += "</ul>";
+                    resultDiv.innerHTML = output;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</head>
+<body>
+    <h1>Find Player Connections</h1>
+    <input type="text" id="player_name" placeholder="Enter player name" onkeyup="searchPlayers()">
+
+    <div id="player_select" style="display:none;">
+        <label for="player_dropdown">Select Player:</label>
+        <select id="player_dropdown"></select>
+        <button onclick="fetchConnections()">Search</button>
+    </div>
+
+    <div id="results"></div>
+</body>
+</html>
