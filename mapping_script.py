@@ -16,9 +16,10 @@ PG_DB_PARAMS = {
 }
 
 # Neo4j Connection
-NEO4J_URI = "bolt://localhost:7689"
+# Update these lines in mapping_script.py
+NEO4J_URI = "neo4j+s://cb1581ea.databases.neo4j.io"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "fleish00"
+NEO4J_PASSWORD = "gKotX_ti49ZgrFsQERAWk9rQmktPz5c1q4KsN-XAG1c"
 
 
 class Neo4jLoader:
